@@ -144,6 +144,10 @@ public interface IUnityObjectBase : IUnityAssetBase
 			return OverrideName;
 		}
 		Utf8String? name = (this as INamed)?.Name;
+		if (ClassName == "AnimationClip")
+		{
+			return this.PathID.ToString();
+		}
 		if (!Utf8String.IsNullOrEmpty(name))
 		{
 			return name;
