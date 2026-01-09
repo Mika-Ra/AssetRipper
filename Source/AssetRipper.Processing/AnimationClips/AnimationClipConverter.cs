@@ -45,7 +45,6 @@ namespace AssetRipper.Processing.AnimationClips
 
 		public static void Process(IAnimationClip clip, PathChecksumCache checksumCache)
 		{
-			clip.Name = clip.PathID.ToString();
 			AnimationClipConverter converter = new(clip, checksumCache);
 			converter.ProcessInner();
 		}
