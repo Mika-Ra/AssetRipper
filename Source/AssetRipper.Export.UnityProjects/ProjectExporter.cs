@@ -1,4 +1,4 @@
-﻿using AssetRipper.Assets;
+using AssetRipper.Assets;
 using AssetRipper.Assets.Bundles;
 using AssetRipper.Import.Configuration;
 using AssetRipper.Import.Logging;
@@ -81,6 +81,10 @@ namespace AssetRipper.Export.UnityProjects
 		{
 			EventExportPreparationStarted?.Invoke();
 			List<IExportCollection> collections = CreateCollections(fileCollection);
+			
+			// 只保留 AnimationClip 的导出集合 (ClassID 74)
+			collections.RemoveAll(collection => !collection.Assets.Any(asset => asset.ClassID == 74));
+			
 			EventExportPreparationFinished?.Invoke();
 
 			EventExportStarted?.Invoke();
