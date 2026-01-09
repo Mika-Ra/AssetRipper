@@ -1,4 +1,4 @@
-﻿using AssetRipper.Assets;
+using AssetRipper.Assets;
 using AssetRipper.Assets.Bundles;
 using AssetRipper.Import.Configuration;
 using AssetRipper.Import.Logging;
@@ -81,6 +81,80 @@ namespace AssetRipper.Export.UnityProjects
 		{
 			EventExportPreparationStarted?.Invoke();
 			List<IExportCollection> collections = CreateCollections(fileCollection);
+			
+			// ========== 调试信息开始 ==========
+			Logger.Info(LogCategory.Export, "=== DEBUG: Collection Analysis ===");
+			Logger.Info(LogCategory.Export, $"Total collections: {collections.Count}");
+			
+			// 统计每种类型的集合
+			var collectionStats = collections
+				.GroupBy(c => c.GetType().Name)
+				.Select(g => new { Type = g.Key, Count = g.Count() })
+				.OrderByDescending(x => x.Count);
+			
+			Logger.Info(LogCategory.Export, "Collection types:");
+			foreach (var stat in collectionStats)
+			{
+				Logger.Info(LogCategory.Export, $"  {stat.Type}: {stat.Count}");
+			}
+			
+			// 详细分析前20个集合（或全部如果少于20个）
+			Logger.Info(LogCategory.Export, "\n=== First 20 Collections Details ===");
+			int debugLimit = Math.Min(20, collections.Count);
+			for (int i = 0; i < debugLimit; i++)
+			{
+				var collection = collections[i];
+				var collectionType = collection.GetType().Name;
+				var collectionFullType = collection.GetType().FullName;
+				
+				Logger.Info(LogCategory.Export, $"\n[{i}] Collection: {collection.Name}");
+				Logger.Info(LogCategory.Export, $"    Type: {collectionType}");
+				Logger.Info(LogCategory.Export, $"    Full Type: {collectionFullType}");
+				Logger.Info(LogCategory.Export, $"    Exportable: {collection.Exportable}");
+				Logger.Info(LogCategory.Export, $"    Assets Count: {collection.Assets.Count()}");
+				
+				// 显示集合中的资源详情
+				var assets = collection.Assets.Take(5).ToList(); // 只显示前5个资源
+				if (assets.Any())
+				{
+					Logger.Info(LogCategory.Export, "    Assets:");
+					foreach (var asset in assets)
+					{
+						Logger.Info(LogCategory.Export, $"      - ClassID: {asset.ClassID}, Type: {asset.GetType().Name}");
+					}
+					if (collection.Assets.Count() > 5)
+					{
+						Logger.Info(LogCategory.Export, $"      ... and {collection.Assets.Count() - 5} more assets");
+					}
+				}
+			}
+			
+			// 特别标记 AnimationClip 相关的集合
+			Logger.Info(LogCategory.Export, "\n=== AnimationClip Collections (ClassID 74) ===");
+			var animClipCollections = collections
+				.Where(c => c.Assets.Any(a => a.ClassID == 74))
+				.ToList();
+			
+			if (animClipCollections.Any())
+			{
+				Logger.Info(LogCategory.Export, $"Found {animClipCollections.Count} collections containing AnimationClips:");
+				foreach (var collection in animClipCollections.Take(10)) // 显示前10个
+				{
+					Logger.Info(LogCategory.Export, $"  - Name: {collection.Name}");
+					Logger.Info(LogCategory.Export, $"    Type: {collection.GetType().Name}");
+					Logger.Info(LogCategory.Export, $"    Full Type: {collection.GetType().FullName}");
+					var animClips = collection.Assets.Where(a => a.ClassID == 74).ToList();
+					Logger.Info(LogCategory.Export, $"    AnimationClips: {animClips.Count}");
+				}
+			}
+			else
+			{
+				Logger.Warning(LogCategory.Export, "No AnimationClip collections found!");
+			}
+			
+			Logger.Info(LogCategory.Export, "=== DEBUG END ===\n");
+			// ========== 调试信息结束 ==========
+			
 			EventExportPreparationFinished?.Invoke();
 
 			EventExportStarted?.Invoke();
